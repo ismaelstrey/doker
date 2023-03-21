@@ -1,0 +1,59 @@
+version: '2.4'
+services:
+  zabbix-server:
+    container_name: zabbix-server
+    image: zabbix/zabbix-server-pgsql:ol-trunk
+    restart: always
+    pull_policy: always
+    environment:
+      - DB_SERVER_HOST=${DB_SERVER_HOST}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - /srv/volumes/zabbix-server-module:/var/lib/zabbix/modules
+    networks:
+      zabbix-rede: 
+        ipv4_address: ${ZBX_SERVER_HOST}
+
+  zabbix-frontend:
+    container_name: zabbix-frontend
+    image: zabbix/zabbix-web-apache-pgsql:ubuntu-trunk
+    restart: always
+    pull_policy: always
+    environment:
+      - DB_SERVER_HOST=${DB_SERVER_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - ZBX_SERVER_HOST=${ZBX_SERVER_HOST}
+      - PHP_TZ=${PHP_TZ}
+    networks:
+      zabbix-rede:
+        ipv4_address: ${ZBX_FRONT_HOST}
+    ports:
+      - ${ZBX_FRONT_PORT}:8080
+      - ${ZBX_FRONT_PORT_HTTPS}:8443
+    volumes:
+      - /srv/volumes/zabbix-frontend/ssl.key:/etc/ssl/apache2/ssl.key
+      - /srv/volumes/zabbix-frontend/ssl.crt:/etc/ssl/apache2/ssl.crt
+
+  zabbix-pgsql:
+    container_name: zabbix-pgsql
+    image: postgres:15.1-bullseye
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - /srv/volumes/zabbix-pgsql:/var/lib/postgresql/data
+    networks:
+      zabbix-rede:
+        ipv4_address: ${DB_SERVER_HOST}
+    ports:
+      - ${POSTGRES_PORT}:5432
+
+networks:
+  zabbix-rede:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${ZBX_SERVER_SUBNET}
+          gateway: ${ZBX_SERVER_GATWAY}

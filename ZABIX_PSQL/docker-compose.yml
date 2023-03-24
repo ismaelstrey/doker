@@ -43,7 +43,11 @@ services:
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - /srv/volumes/zabbix-pgsql:/var/lib/postgresql/data
+      - type: volume
+        source: data
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
     networks:
       zabbix-rede:
         ipv4_address: ${DB_SERVER_HOST}
@@ -78,7 +82,11 @@ services:
     restart: always
     privileged: true
     volumes:
-      - /var/run:/var/run
+      - type: volume
+        source: data_zabbix-agent
+        target: /var/run
+        volume:
+          nocopy: true
     ports:
       - 10050:${ZABBIX_AGENT_PORT}
     environment:
@@ -92,3 +100,8 @@ networks:
       config:
         - subnet: ${ZBX_SERVER_SUBNET}
           gateway: ${ZBX_SERVER_GATWAY}
+volumes:
+  data:
+  data_zabbix-agent:
+
+
